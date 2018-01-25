@@ -5,6 +5,7 @@ package com.test;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -58,19 +59,34 @@ public class Utils
       }
     }
    
-   public static synchronized WebElement fluentWait(final By locator,final WebDriver driver, int timeout) {
-      Wait<WebDriver> wait = new FluentWait<WebDriver>(driver)
-              .withTimeout(timeout, TimeUnit.SECONDS)
-              .pollingEvery(5, TimeUnit.SECONDS)
-              .ignoring(NoSuchElementException.class);
-
-      WebElement el = wait.until(new Function<WebDriver, WebElement>() {
-          public WebElement apply(WebDriver driver) {
-              return driver.findElement(locator);
-          }
-      });
-
-      return  el;
+//   public static synchronized WebElement fluentWait(final By locator,final WebDriver driver, int timeout) {
+//      Wait<WebDriver> wait = new FluentWait<WebDriver>(driver)
+//              .withTimeout(timeout, TimeUnit.SECONDS)
+//              .pollingEvery(5, TimeUnit.SECONDS)
+//              .ignoring(NoSuchElementException.class);
+//
+//      WebElement el = wait.until(new Function<WebDriver, WebElement>() {
+//          public WebElement apply(WebDriver driver) {
+//              return driver.findElement(locator);
+//          }
+//      });
+//
+//      return  el;
+//   }
+   
+   
+   public static WebElement fluentWait(final By locator, final WebDriver driver, final int timeout, final int polling) throws InterruptedException {
+      int ii = polling;
+      while(ii < timeout) {
+         List<WebElement> allEle = driver.findElements(locator);
+         if (allEle.size() > 0)
+         {
+            return allEle.get(0);
+         }
+         Thread.sleep(polling*1000);
+         ii += polling;
+      }
+      return null;
    }
    
    public static void scrollUp(final By locator, final WebDriver driver) throws InterruptedException {

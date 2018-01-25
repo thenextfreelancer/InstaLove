@@ -18,9 +18,9 @@ public class TelegramUtil
 
    public static int HOURS_OLD_MESSAGES = 24; //in hours
    
-   public static WebElement login(WebDriver driver) throws InterruptedException
+   public static WebElement login(WebDriver driver) throws Exception
    {
-      Thread.sleep(10000);
+      Thread.sleep(5000);
       Utils.giveSpaceInLogs(5);
       System.out.println("########################################## Log in to Telegram ################################## ");
       Utils.giveSpaceInLogs(2);
@@ -43,9 +43,8 @@ public class TelegramUtil
       Thread.sleep(2000);
       System.out.println("Input your OTP in the Given box to proceed. This is one time activity per session.");
       Utils.giveSpaceInLogs(1);
-      
       By elementToVarifyLogin = By.className("icon-hamburger-wrap"); // This item acknowledges that dashboard is opened.
-      return Utils.fluentWait(elementToVarifyLogin, driver, 120);
+      return Utils.fluentWait(elementToVarifyLogin, driver, 120, 5);
    }
 
 //   public static void getConfigurationForPolling() throws InterruptedException

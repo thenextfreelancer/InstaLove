@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.testng.annotations.AfterClass;
@@ -63,7 +64,7 @@ public class AutomateInsta
       Utils.scrollUp(By.cssSelector("div.im_history_scrollable_wrap.nano-content"), driver);
 
       By byopen = By.className("im_history_messages_peer");
-      WebElement parentOfMessages = Utils.fluentWait(byopen, driver, 30);
+      WebElement parentOfMessages = Utils.fluentWait(byopen, driver, 30, 5);
 
       List<WebElement> allMessages = parentOfMessages.findElements(By.className("im_history_message_wrap"));
       List<WebElement> messagesToProcess = new ArrayList<WebElement>();
@@ -85,7 +86,7 @@ public class AutomateInsta
          }
 
          int index = 0;
-         if (size > 1) // the start starts today or you deleted all chats
+         if (size > 1) // the chat starts today or you deleted all chats
             index = size - 2;
 
          for (int ii = 0; ii < size; ii++)

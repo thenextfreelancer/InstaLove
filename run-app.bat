@@ -1,2 +1,2 @@
-java -cp lib\*;target\classes org.testng.TestNG testng.xml
+java -cp lib\*;lib\mvn\*;target\classes org.testng.TestNG testng.xml
 pause
