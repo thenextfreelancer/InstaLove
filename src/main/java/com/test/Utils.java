@@ -89,12 +89,37 @@ public class Utils
       return null;
    }
    
-   public static void scrollUp(final By locator, final WebDriver driver) throws InterruptedException {
-      
+   public static List<WebElement> isDateElementsFoundByScroll(final By locator, final WebDriver driver, int dateCountNeeded) throws InterruptedException {
+      List<WebElement> nonBlankEl = new ArrayList<WebElement>();
+      boolean isReady =  false;
+      while(!isReady) {
+         scrollUp(driver);
+         List<WebElement> temp = driver.findElements(locator);
+         for(int ii = 0; ii < temp.size(); ii++) {
+            WebElement el = temp.get(ii);
+            if(!"".equals(el.getText().trim())) {
+               nonBlankEl.add(el);
+            }
+         } 
+         
+         if(nonBlankEl != null && nonBlankEl.size() >= dateCountNeeded) {
+            isReady = true;
+         } else {
+            temp = null;
+         }
+         
+      }
+      return nonBlankEl;
+   }
+   
+   
+   
+   public static void scrollUp(final WebDriver driver) throws InterruptedException {
+      By locator = By.cssSelector("div.im_history_scrollable_wrap.nano-content");
       JavascriptExecutor jse = (JavascriptExecutor) driver;
       
       WebElement about = driver.findElement(locator);
-      jse.executeScript("arguments[0].scrollBy(0, -500);",about);
+      jse.executeScript("arguments[0].scrollBy(0, -5000);",about);
       Thread.sleep(3000);
    }
    

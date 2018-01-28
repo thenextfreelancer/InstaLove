@@ -66,8 +66,15 @@ public class InstaUtil
       {
          try
          {
-            instaDriver.findElement(heartButton).click();
-            Thread.sleep(3000);
+            WebElement heart = instaDriver.findElement(heartButton);
+            WebElement parent = heart.findElement(By.xpath(".."));
+            try {
+               parent.click();
+            } catch(WebDriverException e) {
+               heart.click();
+            }
+            
+            Thread.sleep(1000);
 
             String previousURL = instaDriver.getCurrentUrl();
 
@@ -119,7 +126,7 @@ public class InstaUtil
       for (WebElement el : els)
       {
          WebElement span = el.findElement(By.tagName("span"));
-         if (span.getText().equalsIgnoreCase(instaSuperGroupName))
+         if (span.getText().contains(instaSuperGroupName))
          {
             grp = el;
             break;

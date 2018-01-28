@@ -2,15 +2,16 @@ package com.test;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.testng.annotations.AfterClass;
@@ -23,16 +24,10 @@ public class AutomateInsta
 
    // System Defined
    private String baseUrl = "https://web.telegram.org";
-   private String instaPrefixUrl = "https://www.instagram.com/p/";
-
-   private String loggingDateFormat = "yyyy/MM/dd HH:mm:ss";
-
-   // User Input for testing only
-   private String telegram_mobile_number_test = "";
-   private String instaSuperGroupName_test = "My_Group";
-   private String instaId_test = "abc@gmail.com";
-   private String instaPass_test = "1234";
-
+   private String instaPrefixUrl1 = "https://www.instagram.com/p/";
+   private String instaPrefixUrl2 = "https://instagram.com/p/";
+   private By dateTag = By.className("im_message_date_split_text");
+   
    private Set<String> clicked = new HashSet<String>(); // Set of total links which are clicked;
 
    /**
@@ -45,107 +40,37 @@ public class AutomateInsta
       System.setProperty("webdriver.chrome.driver", "lib/chromedriver.exe");
       driver = new ChromeDriver();
       driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-   }
-
-   @Test
-   public void test() throws Exception
-   {
+      
       driver.get(baseUrl);
 
       driver.manage().window().maximize();
 
       TelegramUtil.login(driver); // logged in
+   }
+
+   @Test
+   public void test() throws Exception
+   {
+      startAutomation();
+   }
+
+  
+   private void startAutomation() throws InterruptedException, ParseException {
 
       String instaSuperGroupName = InstaUtil.fetchInstaTargetGroupName(); // User Input
 
       InstaUtil.selectInstaGroup(driver, instaSuperGroupName); // selected the mentioned group in User Input
 
-      // Now we need to scroll up to load at least previous day chats
-      Utils.scrollUp(By.cssSelector("div.im_history_scrollable_wrap.nano-content"), driver);
-
-      By byopen = By.className("im_history_messages_peer");
-      WebElement parentOfMessages = Utils.fluentWait(byopen, driver, 30, 5);
-
-      List<WebElement> allMessages = parentOfMessages.findElements(By.className("im_history_message_wrap"));
-      List<WebElement> messagesToProcess = new ArrayList<WebElement>();
-      boolean startAdd = false;
-      Set<String> instaLinks = new HashSet<String>();
-
-      By dateTag = By.className("im_message_date_split_text");
-      List<WebElement> allDateTags = parentOfMessages.findElements(dateTag);
-      int size = allDateTags.size();
-
-      if (size > 0)
-      {
-
-         // check if last element is blank, if yes, reduce the size by 1
-         String lastElText = allDateTags.get(size - 1).getText();
-         if ("".equals(lastElText))
-         {
-            size = size - 1;
-         }
-
-         int index = 0;
-         if (size > 1) // the chat starts today or you deleted all chats
-            index = size - 2;
-
-         for (int ii = 0; ii < size; ii++)
-         {
-            System.out.println(allDateTags.get(ii).getText());
-         }
-         WebElement secondLastDateEl = allDateTags.get(index);
-         String dStr = secondLastDateEl.getText();
-         String dateTemp = null;
-
-         /**
-          * Message filter to get messages only from just previous day
-          * 
-          */
-         for (WebElement message : allMessages)
-         {
-            if (Utils.isElementPresent(dateTag, message))
-            {
-               WebElement el = message.findElement(dateTag);
-               dateTemp = el.getText();
-               if (dStr.equalsIgnoreCase(dateTemp))
-               {
-                  startAdd = true;
-               }
-               if (startAdd && !"".equals(dateTemp))
-               {
-                  dStr = dateTemp;
-               }
-               System.out.println(dateTemp);
-            }
-
-            if (startAdd)
-            {
-               /**
-                * 24 Hours old filter applied
-                * 
-                */
-               if (is24HoursOld(message, dStr))
-               {
-                  messagesToProcess.add(message); // Message Filter to get only 24 hours old messages
-               }
-            }
-         }
-
-         for (WebElement message : messagesToProcess)
-         {
-            getAllLinksSetFromSelectedMessages(message, instaLinks); // filled in instaLinks
-         }
-
-         startLikingLinks(instaLinks);
-      }
-
+      
+      likeFirstDayLinksForTheSelectedGroup();
+      
+      
+      likeSecondDayLinksForTheSelectedGroup();
+      
       Utils.printEndSummaryLogs(clicked);
-   }
+      // End of Program
 
-   @AfterClass(alwaysRun = true)
-   public void tearDown() throws Exception
-   {
-      driver.quit();
+   
    }
 
    private Set<String> getAllLinksSetFromSelectedMessages(WebElement wb, Set<String> instaLinks)
@@ -155,7 +80,7 @@ public class AutomateInsta
       for (WebElement match : matches)
       {
          String clink = match.getText();
-         if (clink.startsWith(instaPrefixUrl))
+         if (clink.startsWith(instaPrefixUrl1) || clink.startsWith(instaPrefixUrl2))
          {
             boolean doAdd = true;
             for (Iterator<String> it = clicked.iterator(); it.hasNext();)
@@ -194,7 +119,7 @@ public class AutomateInsta
          driver.switchTo().window(tabs2.get(1));
          InstaUtil.likeInstaPost(instaLink, driver, clicked, clickedInInterval);
          driver.close();
-         Thread.sleep(2000);
+         Thread.sleep(1000);
          driver.switchTo().window(tabs2.get(0));
          Thread.sleep(2000);
          count++;
@@ -210,37 +135,130 @@ public class AutomateInsta
       }
    }
 
-   private boolean is24HoursOld(WebElement message, String dateStr)
-   {
-      By timeTag = By.className("im_message_date_text");
-      if (Utils.isElementPresent(timeTag, message))
+   
+   private void likeFirstDayLinksForTheSelectedGroup() throws ParseException {
+
+      // Now we need to scroll up to load at least previous day chats
+      try
       {
-         WebElement el = message.findElement(timeTag);
-         String timeTxt = el.getAttribute("data-content");
-         if (timeTxt.isEmpty())
-         {
-            timeTxt = "00:00:01 AM";
-         }
-
-         String dateTime = dateStr + " " + timeTxt;
-
-         try
-         {
-            if (Utils.isWithInPast24Hours(dateTime))
-            {
-               return true;
-            }
-         }
-         catch (ParseException e)
-         {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            return false;
-         }
-         System.out.println(dateTime);
+         List<WebElement> allDateTags = Utils.isDateElementsFoundByScroll(dateTag, driver, 1);
+         commonStepsToLike(allDateTags, 1);
       }
-
-      return false;
+      catch (InterruptedException e)
+      {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
    }
+   
+   private void likeSecondDayLinksForTheSelectedGroup() throws ParseException {
+      // Now we need to scroll up to load at least previous day chats
+      try
+      {
+         List<WebElement> allDateTags = Utils.isDateElementsFoundByScroll(dateTag, driver, 2);
+         commonStepsToLike(allDateTags, 2);
+      }
+      catch (InterruptedException e)
+      {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
+   }
+   
+   
+   private void commonStepsToLike(List<WebElement> allDateTags, int count) throws InterruptedException, ParseException {
+      int size = allDateTags.size();
+      List<WebElement> messagesToProcess = new ArrayList<WebElement>();
+      Set<String> instaLinks = new HashSet<String>();
+      
+      if(size >= count) {
+         Utils.giveSpaceInLogs(2);
+         String currentDate = allDateTags.get(0).getText();
+         
+         By byopen = By.className("im_history_messages_peer");
+         //WebElement parentOfMessages = Utils.fluentWait(byopen, driver, 30, 5);
+         Utils.giveSpaceInLogs(2);
+         
+         List<WebElement> allMessages = driver.findElements(By.className("im_history_message_wrap"));
+         System.out.println("Messages total count: "+allMessages.size());
+         
+         boolean pleaseProceed = false;
 
+         String currentDateStr = currentDate + " 00:00:01 AM";
+         Date currentMsgsDate = Utils.parseDate(currentDateStr);
+         
+
+         Date hours24BeforeFromNow = new Date(System.currentTimeMillis() - (TelegramUtil.HOURS_OLD_MESSAGES *3600 * 1000));
+         
+         if(hours24BeforeFromNow.after(currentMsgsDate)) {
+            pleaseProceed = true;  
+         }
+         
+         if (pleaseProceed)
+         {
+            Utils.giveSpaceInLogs(2);
+            System.out.println("Processing all the messages in the group. This process may take longer than usual based on the number of messages. Please wait ...");
+            for (int ii = (allMessages.size() -1); ii >= 0; ii--)
+            {
+               WebElement message = allMessages.get(ii);
+
+               if (Utils.isElementPresent(dateTag, message))
+               {
+                  WebElement el = message.findElement(dateTag);
+                  if("".equals(el.getText())) {
+                     continue;
+                  }
+                  String currentMsgDateStr = el.getText()  + " 00:00:01 AM";
+                  Date currentMsgDate = Utils.parseDate(currentMsgDateStr);
+                  
+                  if (currentMsgDate.before(currentMsgsDate))
+                  {
+                     break;
+                  }
+
+               }
+
+               messagesToProcess.add(message);
+               System.out.println(".");
+            }
+            Utils.giveSpaceInLogs(2);
+            System.out.println("Thanks for waiting! All messages have been processed. Now, automatic like will start in few moments.");
+            for (WebElement message : messagesToProcess)
+            {
+               getAllLinksSetFromSelectedMessages(message, instaLinks); // filled in instaLinks
+            }
+
+            Utils.giveSpaceInLogs(2);
+            System.out.println("Below Insta links will be processed shortly. If not, there is something to look into:");
+            Utils.giveSpaceInLogs(1);
+            for (String link : instaLinks)
+            {
+               System.out.println("Insta Link: " + link);
+            }
+
+            startLikingLinks(instaLinks);
+         }
+
+      }
+      
+   }
+   
+   
+   @AfterClass(alwaysRun = true)
+   public void tearDown() throws Exception
+   {
+      Utils.giveSpaceInLogs(5);
+      System.out.print("WARNING: Program is going to be terminated. Do you want to proceed?(y/n)?:");
+      Scanner scanMobile = new Scanner(System.in);
+      String switchOffOption = scanMobile.nextLine();
+      
+      if("y".equalsIgnoreCase(switchOffOption)) {
+         driver.quit();
+      } else if("n".equalsIgnoreCase(switchOffOption)){
+         startAutomation();
+      } else {
+         tearDown();
+      }
+   }
+   
 }

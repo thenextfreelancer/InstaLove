@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite verbose="2" name="Failed suite [Main Test Suite]">
-  <test name="TestNG Test Group(failed)">
+<suite thread-count="-1" guice-stage="DEVELOPMENT" name="Failed suite [Default suite]">
+  <test name="Default test(failed)">
     <classes>
       <class name="com.test.AutomateInsta">
         <methods>
@@ -11,5 +11,5 @@
         </methods>
       </class> <!-- com.test.AutomateInsta -->
     </classes>
-  </test> <!-- TestNG Test Group(failed) -->
-</suite> <!-- Failed suite [Main Test Suite] -->
+  </test> <!-- Default test(failed) -->
+</suite> <!-- Failed suite [Default suite] -->

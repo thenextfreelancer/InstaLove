@@ -37,14 +37,14 @@ public class TelegramUtil
       Thread.sleep(5000);
       driver.findElement(By.className("login_head_submit_btn")).click(); //Next button click
 
-      Thread.sleep(5000);
+      Thread.sleep(2000);
       driver.findElement(By.className("btn-md-primary")).click();  //alert ok click
       Utils.giveSpaceInLogs(5);
-      Thread.sleep(2000);
+      Thread.sleep(1000);
       System.out.println("Input your OTP in the Given box to proceed. This is one time activity per session.");
       Utils.giveSpaceInLogs(1);
       By elementToVarifyLogin = By.className("icon-hamburger-wrap"); // This item acknowledges that dashboard is opened.
-      return Utils.fluentWait(elementToVarifyLogin, driver, 120, 5);
+      return Utils.fluentWait(elementToVarifyLogin, driver, 150, 5);
    }
 
 //   public static void getConfigurationForPolling() throws InterruptedException
