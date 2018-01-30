@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.Stack;
 import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
@@ -89,17 +90,21 @@ public class Utils
       return null;
    }
    
-   public static List<WebElement> isDateElementsFoundByScroll(final By locator, final WebDriver driver, int dateCountNeeded) throws InterruptedException {
-      List<WebElement> nonBlankEl = new ArrayList<WebElement>();
+   public static Stack<String> isDateElementsFoundByScroll(final By locator, final WebDriver driver, int dateCountNeeded) throws InterruptedException {
+      Stack<String> nonBlankEl = new Stack<String>();
       boolean isReady =  false;
       while(!isReady) {
          scrollUp(driver);
          List<WebElement> temp = driver.findElements(locator);
          for(int ii = 0; ii < temp.size(); ii++) {
-            WebElement el = temp.get(ii);
-            if(!"".equals(el.getText().trim())) {
-               nonBlankEl.add(el);
+            String date = temp.get(ii).getText();
+            if(!"".equals(date.trim())) {
+               System.out.println("Search Date:"+date);
+               nonBlankEl.push(date);
+            } else {
+               System.out.println("Search Date: Blank");
             }
+            
          } 
          
          if(nonBlankEl != null && nonBlankEl.size() >= dateCountNeeded) {
@@ -120,6 +125,15 @@ public class Utils
       
       WebElement about = driver.findElement(locator);
       jse.executeScript("arguments[0].scrollBy(0, -5000);",about);
+      Thread.sleep(3000);
+   }
+   
+   public static void scrollDown(final WebDriver driver) throws InterruptedException {
+      By locator = By.cssSelector("div.im_history_scrollable_wrap.nano-content");
+      JavascriptExecutor jse = (JavascriptExecutor) driver;
+      
+      WebElement about = driver.findElement(locator);
+      jse.executeScript("arguments[0].scrollBy(0, 10000);",about);
       Thread.sleep(3000);
    }
    

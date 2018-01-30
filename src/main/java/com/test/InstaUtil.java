@@ -74,7 +74,6 @@ public class InstaUtil
                heart.click();
             }
             
-            Thread.sleep(1000);
 
             String previousURL = instaDriver.getCurrentUrl();
 
@@ -99,12 +98,12 @@ public class InstaUtil
          System.out.println("Log Message: The post on insta: " + instaLink + " is already liked!");
       }
       
-      Thread.sleep(2000);
+      Thread.sleep(500);
    }
 
    public static String fetchInstaTargetGroupName() throws InterruptedException
    {
-      Thread.sleep(5000);
+      Thread.sleep(1000);
       Utils.giveSpaceInLogs(5);
       System.out.println("########################################## Enter group Name to inspect for Instagram URLs ################################## ");
       Utils.giveSpaceInLogs(2);
@@ -136,6 +135,16 @@ public class InstaUtil
       if (grp != null)
       {
          grp.click(); // mentioned group selected
+      }
+      
+      try
+      {
+         Utils.scrollDown(driver);
+      }
+      catch (InterruptedException e)
+      {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
       }
    }
 }

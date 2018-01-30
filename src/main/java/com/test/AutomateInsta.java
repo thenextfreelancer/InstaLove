@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.Stack;
 import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
@@ -114,16 +115,12 @@ public class AutomateInsta
       for (String instaLink : instaLinks)
       {
          driver.findElement(By.linkText(instaLink)).click();
-         Thread.sleep(5000);
          List<String> tabs2 = new ArrayList<String>(driver.getWindowHandles());
          driver.switchTo().window(tabs2.get(1));
          InstaUtil.likeInstaPost(instaLink, driver, clicked, clickedInInterval);
          driver.close();
-         Thread.sleep(1000);
          driver.switchTo().window(tabs2.get(0));
-         Thread.sleep(2000);
          count++;
-
          // Put constraint for InstaUtil.PAGE_LIKE_THRESHOLD messages per loop
          if (count == InstaUtil.PAGE_LIKE_THRESHOLD)
          {
@@ -141,8 +138,15 @@ public class AutomateInsta
       // Now we need to scroll up to load at least previous day chats
       try
       {
-         List<WebElement> allDateTags = Utils.isDateElementsFoundByScroll(dateTag, driver, 1);
-         commonStepsToLike(allDateTags, 1);
+         Stack<String> allDateTg = Utils.isDateElementsFoundByScroll(dateTag, driver, 2);
+         List<String> allDateTags = new ArrayList<String>();
+         for(int ii = 0; ii < allDateTg.size(); ii++) {
+            String cDate = allDateTg.pop();
+            if(!"".equals(cDate.trim())){
+               allDateTags.add(cDate);
+            }
+         }
+         commonStepsToLike(allDateTags.get(0));
       }
       catch (InterruptedException e)
       {
@@ -155,8 +159,16 @@ public class AutomateInsta
       // Now we need to scroll up to load at least previous day chats
       try
       {
-         List<WebElement> allDateTags = Utils.isDateElementsFoundByScroll(dateTag, driver, 2);
-         commonStepsToLike(allDateTags, 2);
+         Stack<String> allDateTg = Utils.isDateElementsFoundByScroll(dateTag, driver, 2);
+         List<String> allDateTags = new ArrayList<String>();
+         for(int ii = 0; ii < allDateTg.size(); ii++) {
+            String cDate = allDateTg.pop();
+            if(!"".equals(cDate.trim())){
+               allDateTags.add(cDate);
+            }
+         }
+         if(allDateTags.size() > 1)
+         commonStepsToLike(allDateTags.get(1));
       }
       catch (InterruptedException e)
       {
@@ -166,81 +178,65 @@ public class AutomateInsta
    }
    
    
-   private void commonStepsToLike(List<WebElement> allDateTags, int count) throws InterruptedException, ParseException {
-      int size = allDateTags.size();
+   private void commonStepsToLike(String msgDate) throws InterruptedException, ParseException {
+      
       List<WebElement> messagesToProcess = new ArrayList<WebElement>();
       Set<String> instaLinks = new HashSet<String>();
       
-      if(size >= count) {
          Utils.giveSpaceInLogs(2);
-         String currentDate = allDateTags.get(0).getText();
+         
          
          By byopen = By.className("im_history_messages_peer");
          //WebElement parentOfMessages = Utils.fluentWait(byopen, driver, 30, 5);
          Utils.giveSpaceInLogs(2);
          
-         List<WebElement> allMessages = driver.findElements(By.className("im_history_message_wrap"));
-         System.out.println("Messages total count: "+allMessages.size());
-         
-         boolean pleaseProceed = false;
-
-         String currentDateStr = currentDate + " 00:00:01 AM";
-         Date currentMsgsDate = Utils.parseDate(currentDateStr);
-         
-
-         Date hours24BeforeFromNow = new Date(System.currentTimeMillis() - (TelegramUtil.HOURS_OLD_MESSAGES *3600 * 1000));
-         
-         if(hours24BeforeFromNow.after(currentMsgsDate)) {
-            pleaseProceed = true;  
+         List<WebElement> allMessags = driver.findElements(By.className("im_history_message_wrap"));
+         Stack<WebElement> msgStack = new Stack<WebElement>();
+         for(int kk=0; kk < allMessags.size(); kk++) {
+            msgStack.push(allMessags.get(kk));
          }
          
-         if (pleaseProceed)
+         System.out.println("Messages total count: "+allMessags.size());
+         
+         Utils.giveSpaceInLogs(2);
+         System.out.println("Processing all the messages in the group. This process may take longer than usual based on the number of messages. Please wait ...");
+         for (int ii = (msgStack.size() -1); ii >= 0; ii--)
          {
-            Utils.giveSpaceInLogs(2);
-            System.out.println("Processing all the messages in the group. This process may take longer than usual based on the number of messages. Please wait ...");
-            for (int ii = (allMessages.size() -1); ii >= 0; ii--)
+            WebElement message = msgStack.pop();
+
+            if (Utils.isElementPresent(dateTag, message))
             {
-               WebElement message = allMessages.get(ii);
-
-               if (Utils.isElementPresent(dateTag, message))
-               {
-                  WebElement el = message.findElement(dateTag);
-                  if("".equals(el.getText())) {
-                     continue;
-                  }
-                  String currentMsgDateStr = el.getText()  + " 00:00:01 AM";
-                  Date currentMsgDate = Utils.parseDate(currentMsgDateStr);
-                  
-                  if (currentMsgDate.before(currentMsgsDate))
-                  {
-                     break;
-                  }
-
+               String date = message.findElement(dateTag).getText().trim();
+               if("".equals(date)) {
+                  continue;
                }
+               
+               if(date.equals(msgDate))
+                  break;
 
-               messagesToProcess.add(message);
-               System.out.println(".");
-            }
-            Utils.giveSpaceInLogs(2);
-            System.out.println("Thanks for waiting! All messages have been processed. Now, automatic like will start in few moments.");
-            for (WebElement message : messagesToProcess)
-            {
-               getAllLinksSetFromSelectedMessages(message, instaLinks); // filled in instaLinks
             }
 
-            Utils.giveSpaceInLogs(2);
-            System.out.println("Below Insta links will be processed shortly. If not, there is something to look into:");
-            Utils.giveSpaceInLogs(1);
-            for (String link : instaLinks)
-            {
-               System.out.println("Insta Link: " + link);
-            }
-
-            startLikingLinks(instaLinks);
+            messagesToProcess.add(message);
+            System.out.println(".");
+         }
+         
+         Utils.giveSpaceInLogs(2);
+         System.out.println("Thanks for waiting! All messages have been processed. Now, automatic like will start in few moments.");
+         for ( WebElement message: messagesToProcess)
+         {
+            getAllLinksSetFromSelectedMessages(message, instaLinks); // filled in instaLinks
          }
 
-      }
-      
+         Utils.giveSpaceInLogs(2);
+         System.out.println("Below Insta links will be processed shortly. If not, there is something to look into:");
+         Utils.giveSpaceInLogs(1);
+         for (String link : instaLinks)
+         {
+            System.out.println("Insta Link: " + link);
+         }
+
+         startLikingLinks(instaLinks);
+
    }
    
    
